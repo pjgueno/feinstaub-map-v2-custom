@@ -1,5 +1,6 @@
 import 'whatwg-fetch'
 
+
 let labs = {
 
 	getData: async function (URL, map) {
@@ -32,7 +33,12 @@ let labs = {
 			.then(checkStatus)
 			.then((response) => response.json())
 			.then((data) => {
-				// console.log(data);
+				console.log(data);
+            
+            
+                var labsLayer = new L.LayerGroup();
+                labsLayer.addTo(map);
+            
 				for (var i = 0; i < data.length; i++) {
 					var lab_popuptext = "<b>"+data[i].title+"</b><br/><br/>";
 					if (typeof data[i].meetings != 'undefined') {
@@ -106,7 +112,9 @@ let labs = {
 						}
 					)
 					.bindPopup(lab_popuptext)
-					.addTo(map)
+                                        
+                labsLayer.addLayer(marker);
+
 				}
 			})
 			.catch(function(error) {

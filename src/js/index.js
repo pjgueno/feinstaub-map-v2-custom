@@ -21,6 +21,7 @@ const d3 = Object.assign({}, d3_Selection, d3_Hexbin);
 import api from './feinstaub-api';
 import labs from './labs.js';
 import wind from './wind.js';
+import stations from './stations.js';
 import * as config from './config.js';
 
 import '../css/style.css';
@@ -33,6 +34,8 @@ import './static-files'
 
 // declare variables
 let hexagonheatmap, hmhexaPM_aktuell, hmhexaPM_AQI, hmhexa_t_h_p, hmhexa_noise;
+
+let custom_select2_type;
 
 // save browser lanuage for translation
 const lang = translate.getFirstBrowserLanguage().substring(0, 2);
@@ -116,7 +119,10 @@ const tiles = L.tileLayer(config.tiles, {
 	subdomains: config.tiles_subdomains
 }).addTo(map);
 
+
 new L.Hash(map);
+
+
 
 // define query object
 const query = {
@@ -140,10 +146,23 @@ const query = {
 if (query.nooverlay === "false") d3.select("#betterplace").style("display", "inline-block");
 console.log(translate.tr(lang,d3.select("#loading").html()));
 d3.select("#loading").html(translate.tr(lang,d3.select("#loading").html()));
-config.selection = (query.sensor !== undefined) ? query.sensor : config.selection;
-d3.select("#custom-select").select("select").property("value", config.selection);
+config.selection1 = (query.sensor !== undefined) ? query.sensor : config.selection1;
+config.selection2 = (query.sensor !== undefined) ? query.sensor : config.selection2;
 
-let user_selected_value = config.selection;
+
+d3.select("#custom-select1").select("select").property("value", config.selection1);
+
+//second custom select build
+
+
+
+custom_select2_type = custom_select2_builder(config.selection2);
+
+custom_select2_type.property("value", config.selection2);
+
+
+let user_selected_value1 = config.selection1;
+let user_selected_value2 = config.selection2;
 let coordsCenter = config.center;
 let zoomLevel = config.zoom;
 
@@ -183,7 +202,9 @@ window.onload = function () {
 
 			click: function (d) {
 				timeout(function () {
-					if (map.clicked === 1) sensorNr(d);
+                    if (map.clicked === 1) {
+						sensorNr(d);
+					}
 				}, 300);
 			},
 
@@ -207,7 +228,8 @@ window.onload = function () {
 
 		// Make hex radius dynamic for different zoom levels to give a nicer overview of the sensors as well as making sure that the hex grid does not cover the whole world when zooming out
 		getFlexRadius() {
-			console.log(user_selected_value);
+			console.log(user_selected_value1);
+            console.log(user_selected_value2);
 			if (this.map.getZoom() < 3) {
 				return this.options.radius / (3 * (4 - this.map.getZoom()));
 			} else if (this.map.getZoom() > 2 && this.map.getZoom() < 8) {
@@ -387,6 +409,9 @@ window.onload = function () {
 				.remove();
 		},
 		data(data) {
+            
+            console.log(data);
+            
 			this._data = (data != null) ? data : [];
 			this.draw();
 			return this;
@@ -422,21 +447,37 @@ The values are refreshed every 5 minutes in order to fit with the measurement fr
 	d3.select("#AQI_Very_Unhealthy").html(" " + translate.tr(lang, "Very Unhealthy<div class='tooltip-div'>Health alert: everyone may experience more serious health effects.</div>"));
 	d3.select("#AQI_Hazardous").html(" " + translate.tr(lang, "Hazardous<div class='tooltip-div'>Health warnings of emergency conditions. The entire population is more likely to be affected.</div>"));
 
-	//	Select
-	const custom_select = d3.select("#custom-select");
-	custom_select.select("select").property("value", config.selection);
-	custom_select.select("select").selectAll("option").each(function () {
+	//	Select 1
+	const custom_select1 = d3.select("#custom-select1");
+	custom_select1.select("select").property("value", config.selection1);
+	custom_select1.select("select").selectAll("option").each(function () {
 		d3.select(this).html(translate.tr(lang, d3.select(this).html()));
 	});
-	custom_select.append("div").attr("class", "select-selected").html("<span>"+translate.tr(lang,
-		custom_select.select("select").select("option:checked").html())+"</span>").on("click", showAllSelect);
-	custom_select.style("display", "inline-block");
+	custom_select1.append("div").attr("class", "select-selected").html("<span>"+translate.tr(lang,
+		custom_select1.select("select").select("option:checked").html())+"</span>").on("click", showAllSelect);
+	custom_select1.style("display", "inline-block");
+    
+    
+    //  Select 2
+    const custom_select2 = d3.select("#custom-select2");
 
-	switchLegend(user_selected_value);
+    custom_select2_type = custom_select2_builder(config.selection2);
+
+    custom_select2_type.property("value", config.selection2);  
+    custom_select2_type.selectAll("option").each(function () {
+d3.select(this).html(translate.tr(lang, d3.select(this).html()));
+});
+    
+    d3.select("#custom-select2").append("div").attr("class", "select-selected").html("<span>"+translate.tr(lang,
+		custom_select2_type.select("option:checked").html())+"</span>").on("click", showAllSelect2);
+	custom_select2.style("display", "inline-block");
+    
+
+	switchLegend(user_selected_value1);
 
 	map.setView(coordsCenter, zoomLevel);
 	map.clicked = 0;
-	hexagonheatmap = L.hexbinLayer(scale_options[user_selected_value]).addTo(map);
+	hexagonheatmap = L.hexbinLayer(scale_options[user_selected_value1]).addTo(map);
 
 //	REVOIR ORDRE DANS FONCTION READY
 	function retrieveData() {
@@ -481,9 +522,11 @@ The values are refreshed every 5 minutes in order to fit with the measurement fr
 
 	map.on('click', function (e) {
 		/* if the user clicks anywhere outside the opened select drop down, then close all select boxes */
-		if (! d3.select("#custom-select").select(".select-items").empty()) {
-			d3.select("#custom-select").select(".select-items").remove();
-			d3.select("#custom-select").select(".select-selected").attr("class", "select-selected");
+		if (! d3.select("#custom-select1").select(".select-items").empty()) {
+			d3.select("#custom-select1").select(".select-items").remove();
+			d3.select("#custom-select1").select(".select-selected").attr("class", "select-selected");
+             d3.select("#custom-select2").select(".select-items").remove();
+			d3.select("#custom-select2").select(".select-selected").attr("class", "select-selected");
 		} else {
 			map.clicked = map.clicked + 1;
 			timeout(function () {
@@ -511,17 +554,30 @@ The values are refreshed every 5 minutes in order to fit with the measurement fr
 	} else {
 		d3.select("#cb_wind").property("checked", false);
 	}
-
+    
+//    if (config.layer_eustations) {
+//		d3.select("#cb_eustations").property("checked", true);
+//	} else {
+//		d3.select("#cb_eustations").property("checked", false);
+//	}
+    
+    
 	labs.getData(data_host + "/local-labs/labs.json", map);
 	wind.getData(data_host + "/data/v1/wind.json", map);
+stations.getData("http://127.0.0.1:8080/src/js/EUStationsLocations.json", map);
+//    stations.getData("EUStationsLocations.json", map);
+
 	
 	d3.select("#label_local_labs").html(translate.tr(lang, "Local labs"));
 	d3.select("#label_wind_layer").html(translate.tr(lang, "Wind layer"));
+    d3.select("#label_eustations").html(translate.tr(lang, "EU stations"));
 
 	switchLabLayer();
 	switchWindLayer();
+    switchStationLayer();
 	d3.select("#cb_labs").on("change", switchLabLayer);
 	d3.select("#cb_wind").on("change", switchWindLayer);
+    d3.select("#cb_eustations").on("change", switchStationLayer);
 
 } 
 
@@ -541,20 +597,63 @@ function switchWindLayer() {
 	}
 }
 
+function switchStationLayer() {
+	if (d3.select("#cb_eustations").property("checked")) {
+        
+            		d3.selectAll("path.leaflet-interactive").style("visibility", "visible");
+        
+        console.log("check");
+        
+        
+	} else {
+            		d3.selectAll("path.leaflet-interactive").style("visibility", "hidden");
+
+		//map.getPane('tilePane').style.visibility = "hidden";
+            console.log("uncheck");
+
+    }
+}
+    
+    
+    
+
 function data_median(data) {
 	function sort_num(a,b) {
 		var c = a - b;
 		return (c < 0 ? -1 : (c = 0 ? 0 : 1));
 	}
 	var d_temp = data.filter(d => !d.o.indoor)
-					.map(o => o.o.data[user_selected_value])
+					.map(o => o.o.data[user_selected_value1])
 					.sort(sort_num);
 	return median(d_temp);
 }
 
 function switchLegend(val) {
+    
+    
+    
+    
+    
+    
+    
+    
+    
 	d3.select('#legendcontainer').selectAll("[id^=legend_]").style("display", "none");
 	d3.select('#legend_' + val).style("display", "block");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 /*  Menu and Dropdown */
@@ -598,22 +697,22 @@ function ready(num) {
 
 	d3.select("#update").html(translate.tr(lang, "Last update") + ": " + dateFormater(newTime));
 
-	if (num === 1 && (user_selected_value === "PM10" || user_selected_value === "PM25")) {
-		hexagonheatmap.initialize(scale_options[user_selected_value]);
+	if (num === 1 && (user_selected_value1 === "PM10" || user_selected_value1 === "PM25")) {
+		hexagonheatmap.initialize(scale_options[user_selected_value1]);
 		hexagonheatmap.data(hmhexaPM_aktuell);
 	}
-	if (num === 2 && user_selected_value === "Official_AQI_US") {
-		hexagonheatmap.initialize(scale_options[user_selected_value]);
+	if (num === 2 && user_selected_value1 === "Official_AQI_US") {
+		hexagonheatmap.initialize(scale_options[user_selected_value1]);
 		hexagonheatmap.data(hmhexaPM_AQI);
 	}
-	if (num === 3 && (user_selected_value === "Temperature" || user_selected_value === "Humidity" || user_selected_value === "Pressure")) {
-		hexagonheatmap.initialize(scale_options[user_selected_value]);
+	if (num === 3 && (user_selected_value1 === "Temperature" || user_selected_value1 === "Humidity" || user_selected_value1 === "Pressure")) {
+		hexagonheatmap.initialize(scale_options[user_selected_value1]);
 		hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
-			return api.checkValues(value.data[user_selected_value], user_selected_value);
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
 		}));
 	}
-	if (num === 4 && user_selected_value === "Noise") {
-		hexagonheatmap.initialize(scale_options[user_selected_value]);
+	if (num === 4 && user_selected_value1 === "Noise") {
+		hexagonheatmap.initialize(scale_options[user_selected_value1]);
 		hexagonheatmap.data(hmhexa_noise);
 	}
 	d3.select("#loading_layer").style("display", "none");
@@ -623,25 +722,252 @@ function reloadMap(val) {
 	d3.selectAll('path.hexbin-hexagon').remove();
 
 	closeSidebar();
-	switchLegend(val);
+    
+    console.log(val);
+    
+    if (val === "PM10" || val === "PM25" || val === "Official_AQI_US" || val === "Temperature" || val === "Humidity" || val === "Pressure" || val === "Noise" ){
+        
+    switchLegend(val);
+	hexagonheatmap.initialize(scale_options[val]); 
+        
+    }else{
+        
+    switchLegend(user_selected_value1);
+	hexagonheatmap.initialize(scale_options[user_selected_value1]);    
+    };
+    
 
-	hexagonheatmap.initialize(scale_options[val]);
 	if (val === "PM10" || val === "PM25") {
 		hexagonheatmap.data(hmhexaPM_aktuell);
+        user_selected_value2 = "allPM";
+        custom_select2_type = d3.select("#custom-select2").select("#selectPM");
+        reloadDropDown("#selectPM","allPM");
+        
 	} else if (val === "Official_AQI_US") {
 		hexagonheatmap.data(hmhexaPM_AQI);
-	} else if (val === "Temperature" || val === "Humidity" || val === "Pressure") {
+         user_selected_value2 = "allPM";
+                custom_select2_type = d3.select("#custom-select2").select("#selectPM");
+        reloadDropDown("#selectPM","allPM");  
+        
+	} else if (val === "Temperature") {
 		hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
-			return api.checkValues(value.data[user_selected_value], user_selected_value);
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
 		}));
+        
+      user_selected_value2 = "allT";
+        custom_select2_type = d3.select("#custom-select2").select("#selectT");  
+        reloadDropDown("#selectT","allT");
+        
+    } else if (val === "Humidity") {
+		hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
+		}));
+        
+      user_selected_value2 = "allRH";
+        custom_select2_type = d3.select("#custom-select2").select("#selectRH");  
+        reloadDropDown("#selectRH","allRH");  
+        
+    } else if (val === "Pressure") {
+		hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
+		}));
+        
+      user_selected_value2 = "allP";
+        custom_select2_type = d3.select("#custom-select2").select("#selectP");  
+        reloadDropDown("#selectP","allP");
+        
 	} else if (val === "Noise") {
 		hexagonheatmap.data(hmhexa_noise);
-	}
+        
+        user_selected_value2 = "allN";
+        custom_select2_type = d3.select("#custom-select2").select("#selectN");
+        reloadDropDown("#selectN","allN");
+        
+        
+	} else if (val === "allPM") {
+                
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {
+            hexagonheatmap.data(hmhexaPM_aktuell);
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){
+            hexagonheatmap.data(hmhexaPM_AQI);
+            
+        };
+        
+    } else if (val === "SDS011") {
+        
+        console.log(user_selected_value1);
+        
+                
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+           
+                   console.log("ENTER");
+
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "SDS011"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "SDS011"}));   
+        };    
+        
+    }  else if (val === "SDS021") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "SDS021"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "SDS021"}));   
+        };   
+    }  else if (val === "PMS1003") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "PMS1003"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "PMS1003"}));   
+        };   
+    } else if (val === "PMS3003") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "PMS3003"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "PMS3003"}));   
+        };   
+    } else if (val === "PMS5003") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "PMS5003"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "PMS5003"}));   
+        };   
+    } else if (val === "PMS6003") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "PMS6003"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "PMS6003"}));   
+        };   
+    }else if (val === "HPM") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "HPM"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "HPM"}));   
+        };   
+    }  else if (val === "SPS30") {
+        
+        if (user_selected_value1 == "PM25" || user_selected_value1 == "PM10") {            
+            hexagonheatmap.data(hmhexaPM_aktuell.filter(function(i) {return i.type == "SPS30"}));
+            
+        } else if (user_selected_value1 == "Official_AQI_US"){            
+            hexagonheatmap.data(hmhexaPM_AQI.filter(function(i) {return i.type == "SPS30"}));   
+        };   
+    }  else if (val === "allT") {
+        
+        if (user_selected_value1 == "Temperature") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    }else if (val === "DHT11") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "DHT11"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "DHT22") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "DHT22"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT11") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT11"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT12") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT12"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT15") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT15"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT30") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT30"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT31") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT31"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "SHT35") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "SHT35"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "HTU21D") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "HTU21D"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    }  else if (val === "BMP180") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Pressure") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "BMP180"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    }else if (val === "DS18B20") {
+        
+        if (user_selected_value1 == "Temperature") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "DS18B20"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "BMP280") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Pressure") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "BMP280"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "BME280") {
+        
+        if (user_selected_value1 == "Temperature" || user_selected_value1 == "Pressure" || user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function(i) {return i.type == "BME280"}).filter(function (value) {return api.checkValues(value.data[user_selected_value1], user_selected_value1);}));
+        }   
+    } else if (val === "allP") {
+        
+        if (user_selected_value1 == "Pressure") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
+		}));
+        }   
+    }else if (val === "allRH") {
+        
+        if (user_selected_value1 == "Humidity") {            
+            hexagonheatmap.data(hmhexa_t_h_p.filter(function (value) {
+			return api.checkValues(value.data[user_selected_value1], user_selected_value1);
+		}));
+        }   
+    }else if (val === "allN") {
+        
+        if (user_selected_value1 == "Noise") {            
+            hexagonheatmap.data(hmhexa_noise);
+        }   
+    } else if (val === "DNMS") {
+        
+        if (user_selected_value1 == "Noise") {            
+            hexagonheatmap.data(hmhexa_noise.filter(function(i) {return i.type == "Laerm"}));
+        }   
+    }
+    
+    
+
 }
 
 function sensorNr(data) {
 	let inner_pre = "#";
-	if (user_selected_value !== "Official_AQI_US") {
+	if (user_selected_value1 !== "Official_AQI_US") {
 		inner_pre = "(+) #";
 	}
 
@@ -657,25 +983,25 @@ function sensorNr(data) {
 	data.forEach(function (i) {
 		sensors += "<tr><td class='idsens' id='id_" + i.o.id + (i.o.indoor? "_indoor":"") + "'>" + inner_pre + i.o.id + (i.o.indoor? " (indoor)":"") +"</td>";
 		if (user_selected_value === "PM10") {
-			sensors += "<td>" + i.o.data[user_selected_value] + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + "</td></tr>";
 		}
 		if (user_selected_value === "PM25") {
-			sensors += "<td>" + i.o.data[user_selected_value] + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + "</td></tr>";
 		}
 		if (user_selected_value === "Official_AQI_US") {
-			sensors += "<td>" + i.o.data[user_selected_value] + " (" + i.o.data.origin + ")</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + " (" + i.o.data.origin + ")</td></tr>";
 		}
 		if (user_selected_value === "Temperature") {
-			sensors += "<td>" + i.o.data[user_selected_value] + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + "</td></tr>";
 		}
 		if (user_selected_value === "Humidity") {
-			sensors += "<td>" + i.o.data[user_selected_value] + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + "</td></tr>";
 		}
 		if (user_selected_value === "Pressure") {
-			sensors += "<td>" + i.o.data[user_selected_value].toFixed(1) + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1].toFixed(1) + "</td></tr>";
 		}
 		if (user_selected_value === "Noise") {
-			sensors += "<td>" + i.o.data[user_selected_value] + "</td></tr>";
+			sensors += "<td>" + i.o.data[user_selected_value1] + "</td></tr>";
 		}
 		sensors += "<tr id='graph_" + i.o.id + "'></tr>";
 	});
@@ -708,12 +1034,12 @@ function displayGraph(id) {
 		d3.select(iddiv).append("td")
 			.attr("id", "frame_" + sens_id)
 			.attr("colspan", "2")
-			.html((panelIDs[user_selected_value][0] > 0 ? panel_str.replace("<PANELID>", panelIDs[user_selected_value][0]).replace("<SENSOR>", sens_id) + "<br/>":"") + (panelIDs[user_selected_value][1] > 0 ? panel_str.replace("<PANELID>", panelIDs[user_selected_value][1]).replace("<SENSOR>", sens_id):""));
+			.html((panelIDs[user_selected_value1][0] > 0 ? panel_str.replace("<PANELID>", panelIDs[user_selected_value1][0]).replace("<SENSOR>", sens_id) + "<br/>":"") + (panelIDs[user_selected_value1][1] > 0 ? panel_str.replace("<PANELID>", panelIDs[user_selected_value1][1]).replace("<SENSOR>", sens_id):""));
 
-		if (user_selected_value !== "Official_AQI_US") inner_pre = "(-) ";
+		if (user_selected_value1 !== "Official_AQI_US") inner_pre = "(-) ";
 		d3.select("#id_" + sens).html(inner_pre + "#" + sens_desc);
 	} else {
-		if (user_selected_value !== "Official_AQI_US") inner_pre = "(+) ";
+		if (user_selected_value1 !== "Official_AQI_US") inner_pre = "(+) ";
 		d3.select("#id_" + sens).html(inner_pre + "#" + sens_desc);
 		d3.select("#frame_" + sens_id).remove();
 		removeInArray(openedGraph1, sens_id);
@@ -732,31 +1058,126 @@ function removeInArray(array) {
 }
 
 function showAllSelect() {
-	const custom_select = d3.select("#custom-select");
-	if (custom_select.select(".select-items").empty()) {
-		custom_select.append("div").attr("class", "select-items");
-		custom_select.select("select").selectAll("option").each(function (d) {
+	const custom_select1 = d3.select("#custom-select1");
+	if (custom_select1.select(".select-items").empty()) {
+		custom_select1.append("div").attr("class", "select-items");
+		custom_select1.select("select").selectAll("option").each(function (d) {
 			console.log(d3.select(this).html());
-			if (this.value !== user_selected_value) custom_select.select(".select-items").append("div").html("<span>"+d3.select(this).html()+"</span>").attr("id", "select-item-" + this.value).on("click", function () {
+			if (this.value !== user_selected_value1) custom_select1.select(".select-items").append("div").html("<span>"+d3.select(this).html()+"</span>").attr("id", "select-item-" + this.value).on("click", function () {
 				switchTo(this);
 			});
-			custom_select.select("#select-item-Noise").select("span").attr("id","noise_option");
+			custom_select1.select("#select-item-Noise").select("span").attr("id","noise_option");
 		});
-		custom_select.select(".select-selected").attr("class", "select-selected select-arrow-active");
+		custom_select1.select(".select-selected").attr("class", "select-selected select-arrow-active");
 	}
 }
 
-function switchTo(element) {
-	const custom_select = d3.select("#custom-select");
-	custom_select.select("select").property("value", element.id.substring(12));
-	custom_select.select(".select-selected").html("<span>"+custom_select.select("select").select("option:checked").html()+"</span>");
-	user_selected_value = element.id.substring(12);
-	if (user_selected_value == "Noise") {
-		custom_select.select(".select-selected").select("span").attr("id","noise_option");
-	} else {
-		custom_select.select(".select-selected").select("span").attr("id",null);
+function showAllSelect2() {
+	const custom_select2 = d3.select("#custom-select2");
+	if (custom_select2.select(".select-items").empty()) {
+		custom_select2.append("div").attr("class", "select-items");
+        
+        		custom_select2_type.selectAll("option").each(function (d) {
+
+        
+//		custom_select2.select("select").selectAll("option").each(function (d) {
+			console.log(d3.select(this).html());
+			if (this.value !== user_selected_value2) custom_select2.select(".select-items").append("div").html("<span>"+d3.select(this).html()+"</span>").attr("id", "select-item-" + this.value).on("click", function () {
+				switchTo2(this);
+			});
+		});
+        
+        
+        
+		custom_select2.select(".select-selected").attr("class", "select-selected select-arrow-active");
 	}
-	custom_select.select(".select-selected").attr("class", "select-selected");
-	reloadMap(user_selected_value);
-	custom_select.select(".select-items").remove();
 }
+
+
+
+
+function switchTo(element) {
+	const custom_select1 = d3.select("#custom-select1");
+	custom_select1.select("select").property("value", element.id.substring(12));
+	custom_select1.select(".select-selected").html("<span>"+custom_select1.select("select").select("option:checked").html()+"</span>");
+	user_selected_value1 = element.id.substring(12);
+	if (user_selected_value1 == "Noise") {
+		custom_select1.select(".select-selected").select("span").attr("id","noise_option");
+	} else {
+		custom_select1.select(".select-selected").select("span").attr("id",null);
+	}
+	custom_select1.select(".select-selected").attr("class", "select-selected");
+	reloadMap(user_selected_value1);
+	custom_select1.select(".select-items").remove();
+}
+
+
+function switchTo2(element) {
+	const custom_select2 = d3.select("#custom-select2");
+    
+    console.log(custom_select2_type);
+    	custom_select2_type.property("value", element.id.substring(12));
+    
+	custom_select2.select(".select-selected").html("<span>"+custom_select2_type.select("option:checked").html()+"</span>");
+	user_selected_value2 = element.id.substring(12);
+custom_select2.select(".select-selected").select("span").attr("id",null);
+	custom_select2.select(".select-selected").attr("class", "select-selected");
+	reloadMap(user_selected_value2);
+	custom_select2.select(".select-items").remove();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function custom_select2_builder(selector){
+if(selector=="allPM" || selector=="SDS011"|| selector=="SDS021"|| selector=="PMS1003"|| selector=="PMS3003"|| selector=="PMS5003"|| selector=="PMS6003"|| selector=="HPM"){return d3.select("#custom-select2").select("#selectPM")};
+
+if(selector=="allT" || selector=="DHT11"|| selector=="DHT22"|| selector=="BMP180"|| selector=="BMP280"|| selector=="BME280"|| selector=="HTU21D"|| selector=="DS18B20" || selector=="SHT11" || selector=="SHT12" || selector=="SHT15" || selector=="SHT30" || selector=="SHT31"|| selector=="SHT35"){return d3.select("#custom-select2").select("#selectT")};
+    
+if(selector=="allRH" || selector=="DHT11"|| selector=="DHT22"||  selector=="BME280"|| selector=="HTU21D"|| selector=="SHT11" || selector=="SHT12" || selector=="SHT15" || selector=="SHT30" || selector=="SHT31"|| selector=="SHT35"){return d3.select("#custom-select2").select("#selectRH")};
+    
+if(selector=="allP" || selector=="BMP180"|| selector=="BMP280"|| selector=="BME280"){return d3.select("#custom-select2").select("#selectP")};
+
+if(selector=="allN" || selector=="DNMS"){return d3.select("#custom-select2").select("#selectN")};
+};
+
+function reloadDropDown(selector1,selector2){
+    
+     d3.select("#custom-select2").selectAll("div").remove();
+        d3.select("#custom-select2").select(selector1).property("value", selector2);
+        d3.select("#custom-select2").select(selector1).selectAll("option").each(function () {
+        d3.select(this).html(translate.tr(lang, d3.select(this).html()));
+        });
+        d3.select("#custom-select2").append("div").attr("class", "select-selected").html("<span>"+translate.tr(lang,
+        d3.select("#custom-select2").select(selector1).select("option:checked").html())+"</span>").on("click", function(){
+            	if (d3.select("#custom-select2").select(".select-items").empty()) {
+		d3.select("#custom-select2").append("div").attr("class", "select-items");
+        
+        		d3.select("#custom-select2").select(selector1).selectAll("option").each(function (d) {
+
+        			console.log(d3.select(this).html());
+			if (this.value !== user_selected_value2) d3.select("#custom-select2").select(".select-items").append("div").html("<span>"+d3.select(this).html()+"</span>").attr("id", "select-item-" + this.value).on("click", function () {
+				switchTo2(this);
+			});
+		});
+        
+		d3.select("#custom-select2").select(".select-selected").attr("class", "select-selected select-arrow-active");
+	}}
+    );
+        d3.select("#custom-select2").style("display", "inline-block");
+};

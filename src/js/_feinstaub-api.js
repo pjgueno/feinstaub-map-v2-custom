@@ -151,8 +151,7 @@ let api = {
 								id: values.sensor.id,
 								latitude: Number(values.location.latitude),
 								longitude: Number(values.location.longitude),
-								indoor: values.location.indoor,
-                                type:values.sensor.sensor_type.name
+								"indoor": values.location.indoor,
 							}
 						})
 						.value();
@@ -181,8 +180,6 @@ let api = {
 								"latitude": values.location.latitude,
 								"longitude": values.location.longitude,
 								"indoor": values.location.indoor,
-                                "type":values.sensor.sensor_type.name
-
 							}
 						})
 						.filter(function (values) {
@@ -208,8 +205,6 @@ let api = {
 								"latitude": values.location.latitude,
 								"longitude": values.location.longitude,
 								"indoor": values.location.indoor,
-                                "type":values.sensor.sensor_type.name
-
 							}
 						})
 						.value();
@@ -230,7 +225,6 @@ let api = {
 								"latitude": values.location.latitude,
 								"longitude": values.location.longitude,
 								"indoor": values.location.indoor,
-                                "type":values.sensor.sensor_type.name
 							}
 						})
 						.value();

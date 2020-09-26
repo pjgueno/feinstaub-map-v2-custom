@@ -76,6 +76,17 @@ body {
     pointer-events: none;
 }
 
+#UI_container2 {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 25em;
+    height: 40%;
+    z-index: 900;
+    vertical-align: bottom;
+    pointer-events: none;
+}
+
 .custom-select {
     color: black;
     font-weight: bold;
@@ -87,9 +98,10 @@ body {
     border-radius: 8px;
     border: 1px solid transparent;
     position: absolute;
-    bottom: 4rem;
+    bottom: 5rem;
     margin-left: 1rem;
     pointer-events: auto;
+    /*    overflow-y: scroll;*/
 }
 
 .custom-select:hover, .custom-select:focus {
@@ -497,4 +509,8 @@ tr {
 
 .leaflet-control-velocity {
 	display: none;
+}
+
+.leaflet-popup-content { 
+     width:300px; 
 }

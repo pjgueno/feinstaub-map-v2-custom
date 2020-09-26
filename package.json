@@ -36,7 +36,7 @@
     "d3-geo": "^2.0.1",
     "d3-hexbin": "^0.2.2",
     "d3-scale": "^3.2.3",
-    "d3-selection": "^2.0.0",
+    "d3-selection": "^1.4.1",
     "d3-time": "^2.0.0",
     "d3-time-format": "^3.0.0",
     "d3-timer": "^2.0.0",

@@ -163,7 +163,7 @@
 				</div>
 			</div> 
 		</div>
-		<div id="custom-select" class="custom-select" style="display: none;">
+		<div id="custom-select1" class="custom-select" style="display: none;">
 			<select>
 				<option value="PM10"> PM10</option>
 				<option value="PM25"> PM2.5</option>
@@ -177,9 +177,65 @@
 		<div id="layer-select" class="layer-select">
 			<input type="checkbox" id="cb_labs" name="labs" checked="checked" /><label for="cb_labs" id="label_local_labs">Local labs</label><br/>
 			<input type="checkbox" id="cb_wind" name="wind" checked="checked" /><label for="cb_wind" id="label_wind_layer">Wind layer</label><br/>
-			<!-- <input type="checkbox" id="cb_eustations" name="eustations" checked="" /><label for="cb_eustations" id="label_eustations">EU stations</label><br/> -->
+			 <input type="checkbox" id="cb_eustations" name="eustations" checked="checked" /><label for="cb_eustations" id="label_eustations">EU stations</label><br/> 
 		</div>
 	</div>
+    
+    <div id="UI_container2">   
+    <div id="custom-select2" class="custom-select" style="display: none;">
+            <select id="selectPM">
+                <option value="allPM"> Tous PM</option>
+				<option value="SDS011"> SDS011</option>
+				<option value="SDS021"> SDS021</option>
+				<option value="PMS1003"> PMS1003</option>
+				<option value="PMS3003"> PMS3003</option>
+				<option value="PMS5003"> PMS5003</option>
+				<option value="PMS6003"> PMS6003</option>
+				<option value="HPM"> HPM</option>
+                <option value="SPS30"> SPS30</option>
+			</select>
+            <select id="selectT">
+                <option value="allT"> Tous Temp.</option>
+                <option value="DHT11"> DHT11</option>
+                <option value="DHT22"> DHT22</option>
+                <option value="BMP180"> BMP180</option>
+                <option value="BMP280"> BMP280</option>
+                <option value="BME280"> BME280</option>
+                <option value="HTU21D"> HTU21D</option>
+                <option value="DS18B20"> DS18B20</option>
+                <option value="SHT11"> SHT11</option>
+                <option value="SHT12"> SHT12</option>
+                <option value="SHT15"> SHT15</option>
+                <option value="SHT30"> SHT30</option>
+                <option value="SHT31"> SHT31</option>
+                <option value="SHT35"> SHT35</option>  
+			</select>
+                <select id="selectRH">
+                <option value="allRH"> Tous H.rel.</option>
+                <option value="DHT11"> DHT11</option>
+                <option value="DHT22"> DHT22</option>
+                <option value="BME280"> BME280</option>
+                <option value="HTU21D"> HTU21D</option>
+                <option value="SHT11"> SHT11</option>
+                <option value="SHT12"> SHT12</option>
+                <option value="SHT15"> SHT15</option>
+                <option value="SHT30"> SHT30</option>
+                <option value="SHT31"> SHT31</option>
+                <option value="SHT35"> SHT35</option>
+			</select>
+                <select id="selectP">
+                <option value="allP"> Tous Press.</option>
+                <option value="BMP180"> BMP180</option>
+                <option value="BMP280"> BMP280</option>
+                <option value="BME280"> BME280</option>  
+			</select>
+                <select id="selectN">
+                <option value="allN"> Tous N.son.</option>  
+                <option value="DNMS"> DNMS</option> 
+			</select>
+        </div>            
+    </div>    
+
 
 	<div id='map'>
 	</div>
